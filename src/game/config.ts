@@ -2,9 +2,9 @@
 // This is the file to edit when playtesters complain.
 
 export const WORLD: { w: number; h: number; groundY: number } = {
-  w: 960,
-  h: 540,
-  groundY: 452,
+  w: 1920,
+  h: 1080,
+  groundY: 904,
 };
 
 export const BALANCE: Record<string, number> = {
@@ -17,8 +17,8 @@ export const BALANCE: Record<string, number> = {
   mpRegen: 3.2, // per second
   hpRegenOutOfCombat: 5, // per second
   attackCooldown: 0.72, // seconds between swings
-  attackRange: 72, // px
-  moveSpeed: 100, // px per second
+  attackRange: 144, // px
+  moveSpeed: 200, // px per second
   skillMpCost: 12,
   skillCooldown: 5,
   skillMult: 2.6,

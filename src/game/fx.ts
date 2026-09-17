@@ -23,19 +23,19 @@ export class Fx {
     opts: { crit?: boolean; hurt?: boolean } = {},
   ): void {
     const t = this.scene.add
-      .text(x + Phaser.Math.Between(-8, 8), y, String(text), {
+      .text(x + Phaser.Math.Between(-16, 16), y, String(text), {
         fontFamily: '"Trebuchet MS", Verdana, sans-serif',
-        fontSize: opts.crit ? '30px' : '22px',
+        fontSize: opts.crit ? '60px' : '44px',
         color: opts.hurt ? '#ff5252' : opts.crit ? '#ffd600' : '#ffffff',
         fontStyle: opts.crit ? '900' : 'bold',
         stroke: '#000000',
-        strokeThickness: 4,
+        strokeThickness: 8,
       })
       .setOrigin(0.5)
       .setDepth(50);
     this.scene.tweens.add({
       targets: t,
-      y: y - 60,
+      y: y - 120,
       alpha: 0,
       duration: 850,
       ease: 'Cubic.easeOut',
@@ -50,12 +50,12 @@ export class Fx {
       const img = this.scene.add
         .image(x, y, 'dot')
         .setTint(colors[(Math.random() * colors.length) | 0])
-        .setDisplaySize(3 + Math.random() * 4, 3 + Math.random() * 4)
+        .setDisplaySize(6 + Math.random() * 8, 6 + Math.random() * 8)
         .setDepth(40);
       this.particles.push({
         img,
         vx: Math.cos(a) * s,
-        vy: Math.sin(a) * s - 60,
+        vy: Math.sin(a) * s - 120,
         life: 0.4 + Math.random() * 0.5,
         max: 0.9,
       });
@@ -71,7 +71,7 @@ export class Fx {
       p.life -= dt;
       p.img.x += p.vx * dt;
       p.img.y += p.vy * dt;
-      p.vy += 420 * dt;
+      p.vy += 840 * dt;
       p.img.setAlpha(Math.max(0, p.life / p.max));
     }
     for (const p of this.particles.filter((p) => p.life <= 0)) p.img.destroy();

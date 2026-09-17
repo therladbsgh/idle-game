@@ -31,21 +31,21 @@ export class Hud {
         .text(x, y, '', { fontFamily: FONT, fontSize: size, color, fontStyle: 'bold' })
         .setDepth(101);
 
-    this.lvText = label(36, 36, '22px', '#3a2500').setOrigin(0.5);
-    this.hpText = label(188, 24, '11px', '#ffffff').setOrigin(0.5);
-    this.mpText = label(188, 46, '11px', '#ffffff').setOrigin(0.5);
-    this.xpText = label(188, 68, '11px', '#ffffff').setOrigin(0.5);
-    this.zoneText = label(WORLD.w / 2, 24, '14px', '#eaf4ff').setOrigin(0.5);
-    this.goldText = label(WORLD.w - 14, 18, '14px', '#ffd76a').setOrigin(1, 0);
-    this.killsText = label(WORLD.w - 14, 40, '14px', '#ffffff').setOrigin(1, 0);
-    this.atkText = label(WORLD.w - 14, 62, '14px', '#ffffff').setOrigin(1, 0);
+    this.lvText = label(72, 72, '44px', '#3a2500').setOrigin(0.5);
+    this.hpText = label(376, 48, '22px', '#ffffff').setOrigin(0.5);
+    this.mpText = label(376, 92, '22px', '#ffffff').setOrigin(0.5);
+    this.xpText = label(376, 136, '22px', '#ffffff').setOrigin(0.5);
+    this.zoneText = label(WORLD.w / 2, 48, '28px', '#eaf4ff').setOrigin(0.5);
+    this.goldText = label(WORLD.w - 28, 36, '28px', '#ffd76a').setOrigin(1, 0);
+    this.killsText = label(WORLD.w - 28, 80, '28px', '#ffffff').setOrigin(1, 0);
+    this.atkText = label(WORLD.w - 28, 124, '28px', '#ffffff').setOrigin(1, 0);
 
     const bg = scene.add
-      .rectangle(WORLD.w - 54, WORLD.h - 32, 76, 40, 0x238636)
+      .rectangle(WORLD.w - 108, WORLD.h - 64, 152, 80, 0x238636)
       .setDepth(101)
-      .setStrokeStyle(2, 0x2ea043)
+      .setStrokeStyle(4, 0x2ea043)
       .setInteractive({ useHandCursor: true });
-    this.speedText = label(WORLD.w - 54, WORLD.h - 32, '16px', '#ffffff').setOrigin(0.5);
+    this.speedText = label(WORLD.w - 108, WORLD.h - 64, '32px', '#ffffff').setOrigin(0.5);
     const onTap = () => {
       if (this.onSpeedChange) this.onSpeedChange();
     };
@@ -53,13 +53,13 @@ export class Hud {
     this.speedText.setInteractive({ useHandCursor: true }).on('pointerdown', onTap);
 
     this.bannerText = scene.add
-      .text(WORLD.w / 2, 190, '', {
+      .text(WORLD.w / 2, 380, '', {
         fontFamily: FONT,
-        fontSize: '64px',
+        fontSize: '128px',
         color: '#ffe066',
         fontStyle: '900',
         stroke: '#7a4d00',
-        strokeThickness: 8,
+        strokeThickness: 16,
       })
       .setOrigin(0.5)
       .setAlpha(0)
@@ -69,14 +69,14 @@ export class Hud {
   private bar(x: number, y: number, w: number, h: number, ratio: number, light: number, dark: number): void {
     const g = this.gfx;
     g.fillStyle(0x1c2128, 1);
-    g.fillRoundedRect(x, y, w, h, 7);
+    g.fillRoundedRect(x, y, w, h, 14);
     const fw = Math.max(0, Math.min(1, ratio)) * w;
-    if (fw > 1) {
+    if (fw > 2) {
       g.fillGradientStyle(light, light, dark, dark, 1);
-      g.fillRoundedRect(x, y, fw, h, 7);
+      g.fillRoundedRect(x, y, fw, h, 14);
     }
-    g.lineStyle(1, 0x444c56, 1);
-    g.strokeRoundedRect(x, y, w, h, 7);
+    g.lineStyle(2, 0x444c56, 1);
+    g.strokeRoundedRect(x, y, w, h, 14);
   }
 
   update(p: Player): void {
@@ -85,22 +85,22 @@ export class Hud {
 
     // Player plate
     g.fillStyle(0x0d1117, 0.78);
-    g.fillRoundedRect(10, 10, 300, 92, 10);
-    g.lineStyle(2, 0x2d333b, 1);
-    g.strokeRoundedRect(10, 10, 300, 92, 10);
+    g.fillRoundedRect(20, 20, 600, 184, 20);
+    g.lineStyle(4, 0x2d333b, 1);
+    g.strokeRoundedRect(20, 20, 600, 184, 20);
     g.fillStyle(0xe8930c, 1);
-    g.fillCircle(36, 36, 26);
+    g.fillCircle(72, 72, 52);
     g.fillStyle(0xffd76a, 1);
-    g.fillCircle(31, 31, 16);
-    this.bar(76, 16, 224, 16, p.hp / p.maxHp, 0xff6b6b, 0xd92626);
-    this.bar(76, 38, 224, 16, p.mp / p.maxMp, 0x5aa9ff, 0x1f6feb);
-    this.bar(76, 60, 224, 16, p.exp / expForLevel(p.level), 0xffe066, 0xf0a500);
+    g.fillCircle(62, 62, 32);
+    this.bar(152, 32, 448, 32, p.hp / p.maxHp, 0xff6b6b, 0xd92626);
+    this.bar(152, 76, 448, 32, p.mp / p.maxMp, 0x5aa9ff, 0x1f6feb);
+    this.bar(152, 120, 448, 32, p.exp / expForLevel(p.level), 0xffe066, 0xf0a500);
 
     // Stats panel
     g.fillStyle(0x0d1117, 0.78);
-    g.fillRoundedRect(WORLD.w - 140, 10, 130, 82, 10);
-    g.lineStyle(2, 0x2d333b, 1);
-    g.strokeRoundedRect(WORLD.w - 140, 10, 130, 82, 10);
+    g.fillRoundedRect(WORLD.w - 280, 20, 260, 164, 20);
+    g.lineStyle(4, 0x2d333b, 1);
+    g.strokeRoundedRect(WORLD.w - 280, 20, 260, 164, 20);
 
     this.lvText.setText(String(p.level));
     this.hpText.setText(`${Math.ceil(p.hp)} / ${p.maxHp}`);
@@ -117,14 +117,14 @@ export class Hud {
   }
 
   feed(msg: string): void {
-    for (const f of this.feedTexts) f.y -= 22;
+    for (const f of this.feedTexts) f.y -= 44;
     const t = this.scene.add
-      .text(14, WORLD.h - 40, msg, {
+      .text(28, WORLD.h - 80, msg, {
         fontFamily: FONT,
-        fontSize: '12px',
+        fontSize: '24px',
         color: '#bfe3ff',
         backgroundColor: 'rgba(13,17,23,0.7)',
-        padding: { x: 8, y: 3 },
+        padding: { x: 16, y: 6 },
       })
       .setDepth(101);
     this.feedTexts.push(t);
@@ -147,14 +147,14 @@ export class Hud {
   banner(text: string): void {
     const b = this.bannerText;
     this.scene.tweens.killTweensOf(b);
-    b.setText(text).setAlpha(1).setScale(0.6).setY(190);
+    b.setText(text).setAlpha(1).setScale(0.6).setY(380);
     this.scene.tweens.add({
       targets: b,
       scale: 1.12,
       duration: 260,
       ease: 'Back.easeOut',
       onComplete: () => {
-        this.scene.tweens.add({ targets: b, scale: 1, y: 174, alpha: 0, duration: 1100, delay: 500 });
+        this.scene.tweens.add({ targets: b, scale: 1, y: 348, alpha: 0, duration: 1100, delay: 500 });
       },
     });
   }

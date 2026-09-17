@@ -37,11 +37,11 @@ export class Monster {
     this.gold = Math.round(def.gold * (1 + 0.2 * (playerLevel - 1)));
 
     this.container = scene.add.container(x, WORLD.groundY).setDepth(5);
-    const shadow = scene.add.image(0, 3, 'shadow').setDisplaySize(48, 12);
-    this.body = scene.add.sprite(0, -30, def.texture);
-    this.hpBg = scene.add.rectangle(0, -72, 54, 8, 0x000000, 0.55).setVisible(false);
+    const shadow = scene.add.image(0, 6, 'shadow').setDisplaySize(96, 24);
+    this.body = scene.add.sprite(0, -60, def.texture);
+    this.hpBg = scene.add.rectangle(0, -144, 108, 16, 0x000000, 0.55).setVisible(false);
     this.hpFill = scene.add
-      .rectangle(-26, -72, 52, 6, 0xff5252)
+      .rectangle(-52, -144, 104, 12, 0xff5252)
       .setOrigin(0, 0.5)
       .setVisible(false);
     this.container.add([shadow, this.body, this.hpBg, this.hpFill]);
@@ -78,14 +78,14 @@ export class Monster {
     this.body.scaleX = this.dir;
     if (this.dead) {
       this.container.alpha = Math.max(0, this.deadT / 0.45);
-      this.container.y = WORLD.groundY - (0.45 - this.deadT) * 120;
+      this.container.y = WORLD.groundY - (0.45 - this.deadT) * 240;
     } else {
       this.hopPhase += dt * 6;
-      this.body.y = -30 - Math.abs(Math.sin(this.hopPhase)) * 6;
+      this.body.y = -60 - Math.abs(Math.sin(this.hopPhase)) * 12;
       const hurt = this.hp < this.maxHp;
       this.hpBg.setVisible(hurt);
       this.hpFill.setVisible(hurt);
-      if (hurt) this.hpFill.displayWidth = 52 * Math.max(0, this.hp / this.maxHp);
+      if (hurt) this.hpFill.displayWidth = 104 * Math.max(0, this.hp / this.maxHp);
     }
   }
 }

@@ -31,9 +31,9 @@ export class Player {
 
   constructor(private scene: Phaser.Scene, x: number) {
     this.container = scene.add.container(x, WORLD.groundY).setDepth(10);
-    const shadow = scene.add.image(0, 3, 'shadow');
-    this.body = scene.add.sprite(0, -50, 'hero');
-    this.sword = scene.add.sprite(22, -56, 'sword').setOrigin(0.5, 0.85).setAngle(-40);
+    const shadow = scene.add.image(0, 6, 'shadow');
+    this.body = scene.add.sprite(0, -100, 'hero');
+    this.sword = scene.add.sprite(44, -112, 'sword').setOrigin(0.5, 0.85).setAngle(-40);
     this.container.add([shadow, this.body, this.sword]);
   }
 
@@ -97,7 +97,7 @@ export class Player {
     }
     this.container.setVisible(true);
     this.container.y =
-      WORLD.groundY + (this.moving ? Math.sin(this.walkPhase) * 3 : Math.sin(t * 2) * 1.5);
+      WORLD.groundY + (this.moving ? Math.sin(this.walkPhase) * 6 : Math.sin(t * 2) * 3);
     this.swingT = Math.max(0, this.swingT - dt);
     if (this.swingT <= 0) this.sword.setAngle(-40);
     // Gold sword glow when Power Strike is ready.
