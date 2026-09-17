@@ -1,9 +1,10 @@
 import Phaser from 'phaser';
-import { WORLD, ZONES, expForLevel } from '../game/config';
+import { ZONES, expForLevel } from '../game/config';
 import type { Player } from '../game/Player';
 
 // HUD: player plate (level badge, HP/MP/EXP bars), stats panel, zone label,
-// kill feed, level-up banner, speed toggle. Redrawn every frame via Graphics.
+// kill feed, level-up banner, speed toggle. Everything is camera-fixed
+// (scrollFactor 0) and repositioned on resize via layout().
 
 const FONT = '"Trebuchet MS", Verdana, sans-serif';
 
@@ -20,40 +21,43 @@ export class Hud {
   private killsText: Phaser.GameObjects.Text;
   private atkText: Phaser.GameObjects.Text;
   private speedText: Phaser.GameObjects.Text;
+  private speedBg: Phaser.GameObjects.Rectangle;
   private bannerText: Phaser.GameObjects.Text;
   private feedTexts: Phaser.GameObjects.Text[] = [];
 
   constructor(private scene: Phaser.Scene) {
-    this.gfx = scene.add.graphics().setDepth(100);
+    this.gfx = scene.add.graphics().setDepth(100).setScrollFactor(0);
 
     const label = (x: number, y: number, size: string, color: string) =>
       scene.add
         .text(x, y, '', { fontFamily: FONT, fontSize: size, color, fontStyle: 'bold' })
-        .setDepth(101);
+        .setDepth(101)
+        .setScrollFactor(0);
 
     this.lvText = label(72, 72, '44px', '#3a2500').setOrigin(0.5);
     this.hpText = label(376, 48, '22px', '#ffffff').setOrigin(0.5);
     this.mpText = label(376, 92, '22px', '#ffffff').setOrigin(0.5);
     this.xpText = label(376, 136, '22px', '#ffffff').setOrigin(0.5);
-    this.zoneText = label(WORLD.w / 2, 48, '28px', '#eaf4ff').setOrigin(0.5);
-    this.goldText = label(WORLD.w - 28, 36, '28px', '#ffd76a').setOrigin(1, 0);
-    this.killsText = label(WORLD.w - 28, 80, '28px', '#ffffff').setOrigin(1, 0);
-    this.atkText = label(WORLD.w - 28, 124, '28px', '#ffffff').setOrigin(1, 0);
+    this.zoneText = label(0, 48, '28px', '#eaf4ff').setOrigin(0.5);
+    this.goldText = label(0, 36, '28px', '#ffd76a').setOrigin(1, 0);
+    this.killsText = label(0, 80, '28px', '#ffffff').setOrigin(1, 0);
+    this.atkText = label(0, 124, '28px', '#ffffff').setOrigin(1, 0);
 
-    const bg = scene.add
-      .rectangle(WORLD.w - 108, WORLD.h - 64, 152, 80, 0x238636)
+    this.speedBg = scene.add
+      .rectangle(0, 0, 152, 80, 0x238636)
       .setDepth(101)
+      .setScrollFactor(0)
       .setStrokeStyle(4, 0x2ea043)
       .setInteractive({ useHandCursor: true });
-    this.speedText = label(WORLD.w - 108, WORLD.h - 64, '32px', '#ffffff').setOrigin(0.5);
+    this.speedText = label(0, 0, '32px', '#ffffff').setOrigin(0.5);
     const onTap = () => {
       if (this.onSpeedChange) this.onSpeedChange();
     };
-    bg.on('pointerdown', onTap);
+    this.speedBg.on('pointerdown', onTap);
     this.speedText.setInteractive({ useHandCursor: true }).on('pointerdown', onTap);
 
     this.bannerText = scene.add
-      .text(WORLD.w / 2, 380, '', {
+      .text(0, 380, '', {
         fontFamily: FONT,
         fontSize: '128px',
         color: '#ffe066',
@@ -63,7 +67,27 @@ export class Hud {
       })
       .setOrigin(0.5)
       .setAlpha(0)
-      .setDepth(200);
+      .setDepth(200)
+      .setScrollFactor(0);
+
+    this.layout();
+  }
+
+  /** Reposition camera-fixed elements for the current viewport size. */
+  layout(): void {
+    const w = this.scene.scale.width;
+    const h = this.scene.scale.height;
+    this.zoneText.setPosition(w / 2, 48);
+    this.goldText.setPosition(w - 28, 36);
+    this.killsText.setPosition(w - 28, 80);
+    this.atkText.setPosition(w - 28, 124);
+    this.speedBg.setPosition(w - 108, h - 64);
+    this.speedText.setPosition(w - 108, h - 64);
+    this.bannerText.setPosition(w / 2, 380);
+    // Re-anchor feed lines to the bottom-left.
+    this.feedTexts.forEach((t, i) => {
+      t.setPosition(28, h - 80 - (this.feedTexts.length - 1 - i) * 44);
+    });
   }
 
   private bar(x: number, y: number, w: number, h: number, ratio: number, light: number, dark: number): void {
@@ -82,6 +106,7 @@ export class Hud {
   update(p: Player): void {
     const g = this.gfx;
     g.clear();
+    const w = this.scene.scale.width;
 
     // Player plate
     g.fillStyle(0x0d1117, 0.78);
@@ -98,9 +123,9 @@ export class Hud {
 
     // Stats panel
     g.fillStyle(0x0d1117, 0.78);
-    g.fillRoundedRect(WORLD.w - 280, 20, 260, 164, 20);
+    g.fillRoundedRect(w - 280, 20, 260, 164, 20);
     g.lineStyle(4, 0x2d333b, 1);
-    g.strokeRoundedRect(WORLD.w - 280, 20, 260, 164, 20);
+    g.strokeRoundedRect(w - 280, 20, 260, 164, 20);
 
     this.lvText.setText(String(p.level));
     this.hpText.setText(`${Math.ceil(p.hp)} / ${p.maxHp}`);
@@ -117,16 +142,18 @@ export class Hud {
   }
 
   feed(msg: string): void {
+    const h = this.scene.scale.height;
     for (const f of this.feedTexts) f.y -= 44;
     const t = this.scene.add
-      .text(28, WORLD.h - 80, msg, {
+      .text(28, h - 80, msg, {
         fontFamily: FONT,
         fontSize: '24px',
         color: '#bfe3ff',
         backgroundColor: 'rgba(13,17,23,0.7)',
         padding: { x: 16, y: 6 },
       })
-      .setDepth(101);
+      .setDepth(101)
+      .setScrollFactor(0);
     this.feedTexts.push(t);
     if (this.feedTexts.length > 6) this.feedTexts.shift()?.destroy();
     this.scene.time.delayedCall(5200, () => {
@@ -146,15 +173,23 @@ export class Hud {
 
   banner(text: string): void {
     const b = this.bannerText;
+    const h = this.scene.scale.height;
     this.scene.tweens.killTweensOf(b);
-    b.setText(text).setAlpha(1).setScale(0.6).setY(380);
+    b.setText(text).setAlpha(1).setScale(0.6).setY(Math.min(380, h / 2));
     this.scene.tweens.add({
       targets: b,
       scale: 1.12,
       duration: 260,
       ease: 'Back.easeOut',
       onComplete: () => {
-        this.scene.tweens.add({ targets: b, scale: 1, y: 348, alpha: 0, duration: 1100, delay: 500 });
+        this.scene.tweens.add({
+          targets: b,
+          scale: 1,
+          y: Math.min(348, h / 2 - 32),
+          alpha: 0,
+          duration: 1100,
+          delay: 500,
+        });
       },
     });
   }

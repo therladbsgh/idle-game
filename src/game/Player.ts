@@ -1,8 +1,8 @@
 import Phaser from 'phaser';
-import { BALANCE, WORLD, expForLevel } from './config';
+import { BALANCE, PHYSICS, expForLevel } from './config';
 
-// The hero. Owns stats and its view (container + sprites).
-// Decision-making (targeting, movement, attacking) lives in GameScene.
+// The hero: an Arcade Physics sprite with stats.
+// Decision-making (targeting, navigation, attacking) lives in GameScene.
 
 export class Player {
   level = 1;
@@ -16,44 +16,62 @@ export class Player {
   kills = 0;
 
   dir: 1 | -1 = 1;
-  walkPhase = 0;
-  moving = false;
   attackT = 0;
   skillT = 0;
   deadT = 0;
   idleT = 2;
   idleDir: 1 | -1 = 1;
 
-  container: Phaser.GameObjects.Container;
-  private body: Phaser.GameObjects.Sprite;
-  private sword: Phaser.GameObjects.Sprite;
-  private swingT = 0;
+  // Platforming state (driven by GameScene).
+  sprite: Phaser.Physics.Arcade.Sprite;
+  platform = -1; // -1 = ground, else index into PLATFORMS
+  climbing = false;
+  climbVine: { x: number; yTop: number; yBottom: number; from: number; to: number } | null = null;
+  climbDir: 'up' | 'down' = 'up';
+  moving = false;
+  airborne = false;
+  private attackAnimT = 0;
+  private curAnim = '';
 
-  constructor(private scene: Phaser.Scene, x: number) {
-    this.container = scene.add.container(x, WORLD.groundY).setDepth(10);
-    const shadow = scene.add.image(0, 6, 'shadow');
-    this.body = scene.add.sprite(0, -100, 'hero');
-    this.sword = scene.add.sprite(44, -112, 'sword').setOrigin(0.5, 0.85).setAngle(-40);
-    this.container.add([shadow, this.body, this.sword]);
+  constructor(
+    private scene: Phaser.Scene,
+    x: number,
+    y: number,
+  ) {
+    this.sprite = scene.physics.add.sprite(x, y, 'hero_walk');
+    this.sprite.setScale(PHYSICS.heroScale).setDepth(10);
+    this.sprite.setCollideWorldBounds(false);
+    this.fixBody('hero_walk');
+    this.sprite.play('hero_walk');
+    this.curAnim = 'hero_walk';
   }
 
   get x(): number {
-    return this.container.x;
+    return this.sprite.x;
   }
-  set x(v: number) {
-    this.container.x = v;
+  get y(): number {
+    return this.sprite.y;
   }
 
-  playSwing(skill: boolean): void {
-    this.swingT = 0.28;
-    this.scene.tweens.killTweensOf(this.sword);
-    this.sword.setAngle(-40);
-    this.scene.tweens.add({
-      targets: this.sword,
-      angle: skill ? 150 : 105,
-      duration: 200,
-      ease: 'Cubic.easeOut',
-    });
+  /** Keep the physics body aligned when the cell size changes (attack uses wider cells). */
+  private fixBody(tex: string): void {
+    const body = this.sprite.body as Phaser.Physics.Arcade.Body;
+    const cellW = tex === 'hero_attack' ? 32 : 20;
+    body.setSize(12, 18);
+    body.setOffset((cellW - 12) / 2, 6);
+  }
+
+  private playAnim(key: string): void {
+    if (this.curAnim === key) return;
+    this.curAnim = key;
+    this.fixBody(key);
+    this.sprite.anims.resume();
+    this.sprite.play(key, true);
+  }
+
+  startAttackAnim(skill: boolean): void {
+    this.attackAnimT = skill ? 0.34 : 0.28;
+    this.playAnim('hero_attack');
   }
 
   takeDamage(dmg: number): boolean {
@@ -81,27 +99,45 @@ export class Player {
     this.mp = this.maxMp;
   }
 
-  respawn(x: number): void {
-    this.x = x;
+  respawn(x: number, y: number): void {
+    this.sprite.setPosition(x, y).setVelocity(0, 0);
+    (this.sprite.body as Phaser.Physics.Arcade.Body).setAllowGravity(true);
+    this.climbing = false;
+    this.platform = -1;
     this.fullHeal();
     this.deadT = 0;
-    this.container.setVisible(true).setAlpha(1);
+    this.sprite.setVisible(true).setAlpha(1);
   }
 
   updateVisual(dt: number, t: number): void {
-    this.container.scaleX = this.dir;
+    const s = this.sprite;
+    s.setFlipX(this.dir < 0);
     if (this.deadT > 0) {
-      // Respawn blink.
-      this.container.setVisible(Math.floor(t * 6) % 2 === 0);
+      s.setVisible(Math.floor(t * 6) % 2 === 0);
       return;
     }
-    this.container.setVisible(true);
-    this.container.y =
-      WORLD.groundY + (this.moving ? Math.sin(this.walkPhase) * 6 : Math.sin(t * 2) * 3);
-    this.swingT = Math.max(0, this.swingT - dt);
-    if (this.swingT <= 0) this.sword.setAngle(-40);
-    // Gold sword glow when Power Strike is ready.
-    const ready = this.skillT <= 0 && this.mp >= BALANCE.skillMpCost;
-    this.sword.setTint(ready ? 0xffe066 : 0xffffff);
+    s.setVisible(true);
+
+    this.attackAnimT = Math.max(0, this.attackAnimT - dt);
+    if (this.attackAnimT > 0) {
+      this.playAnim('hero_attack');
+    } else if (this.climbing) {
+      this.playAnim('hero_climb');
+      // Pause the climb anim when hanging still.
+      const body = s.body as Phaser.Physics.Arcade.Body;
+      if (Math.abs(body.velocity.y) < 1) s.anims.pause();
+      else s.anims.resume();
+    } else if (this.airborne) {
+      this.playAnim('hero_jump');
+    } else if (this.moving) {
+      this.playAnim('hero_walk');
+    } else {
+      // Idle: single frame.
+      if (this.curAnim !== 'hero_idle') {
+        this.curAnim = 'hero_idle';
+        this.fixBody('hero_idle');
+        s.setTexture('hero_idle', 0);
+      }
+    }
   }
 }

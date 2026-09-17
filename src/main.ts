@@ -6,12 +6,18 @@ import { GameScene } from './scenes/GameScene';
 new Phaser.Game({
   type: Phaser.AUTO,
   parent: 'app',
-  width: 1920,
-  height: 1080,
   backgroundColor: '#5aa9e6',
   scale: {
-    mode: Phaser.Scale.FIT,
-    autoCenter: Phaser.Scale.CENTER_BOTH,
+    mode: Phaser.Scale.RESIZE,
+    width: window.innerWidth,
+    height: window.innerHeight,
+  },
+  physics: {
+    default: 'arcade',
+    arcade: {
+      gravity: { x: 0, y: 1400 },
+      debug: false,
+    },
   },
   scene: [BootScene, GameScene],
 });
