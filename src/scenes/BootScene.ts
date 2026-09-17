@@ -1,8 +1,8 @@
 import Phaser from 'phaser';
 
 // Loads real sprite assets and defines animations.
-// Hero: Spelunker (Spelunky Classic). Monsters/tiles: MapleStory.
-// Vine: Super Mario RPG beanstalk.
+// Hero: Kyrin, pirate NPC from MapleStory (Nautilus Harbor).
+// Monsters/tiles: MapleStory. Vine: Super Mario RPG beanstalk.
 
 export class BootScene extends Phaser.Scene {
   constructor() {
