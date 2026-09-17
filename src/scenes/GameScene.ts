@@ -110,22 +110,17 @@ export class GameScene extends Phaser.Scene {
   private createPlatforms(): void {
     this.platformGroup = this.physics.add.staticGroup();
 
-    // Ground: seamless 90px grass tile strip + dirt behind it (not below;
-    // the tile is fully opaque, so the dirt rect starts at groundY).
-    const ground = this.add.tileSprite(WORLD.w / 2, WORLD.groundY + 18, WORLD.w, 36, 'tile_grass');
+    // Ground: seamless 90px MapleStory grass tile strip (55px tall, grass + dirt baked in).
+    const ground = this.add.tileSprite(WORLD.w / 2, WORLD.groundY + 27, WORLD.w, 55, 'tile_grass');
     ground.setDepth(2);
     this.platformGroup.add(ground);
-    this.add
-      .rectangle(WORLD.w / 2, WORLD.groundY + 70, WORLD.w, 140, 0x8a5a3b)
-      .setDepth(1);
 
     // Floating platforms. Widths are multiples of the 90px tile (see config),
     // so the repeating texture never clips mid-tile.
     PLATFORMS.forEach((p) => {
-      const t = this.add.tileSprite(p.x + p.w / 2, p.y + 18, p.w, 36, 'tile_grass');
+      const t = this.add.tileSprite(p.x + p.w / 2, p.y + 27, p.w, 55, 'tile_grass');
       t.setDepth(2);
       this.platformGroup.add(t);
-      this.add.rectangle(p.x + p.w / 2, p.y + 36 + 18, p.w, 36, 0x8a5a3b).setDepth(1);
     });
 
     this.platformGroup.refresh();
