@@ -26,8 +26,8 @@ export class BootScene extends Phaser.Scene {
   }
 
   create(): void {
-    // Crisp pixels for the pixel-art hero.
-    for (const key of ['hero_idle', 'hero_walk', 'hero_jump', 'hero_climb', 'hero_attack']) {
+    // Crisp pixels for the pixel-art sprites.
+    for (const key of ['hero_idle', 'hero_walk', 'hero_jump', 'hero_climb', 'hero_attack', 'tile_grass', 'vine']) {
       this.textures.get(key).setFilter(Phaser.Textures.FilterMode.NEAREST);
     }
 
