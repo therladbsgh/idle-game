@@ -20,11 +20,33 @@ export const PHYSICS: Record<string, number> = {
 };
 
 // Platforms: x (left), y (top surface), w (width). Ground is platform -1.
+// Widths are multiples of the 90px grass tile so the texture never clips mid-tile.
 export const PLATFORMS: Array<{ x: number; y: number; w: number }> = [
-  { x: 400, y: 700, w: 400 },
-  { x: 1050, y: 540, w: 380 },
-  { x: 1650, y: 700, w: 400 },
-  { x: 2250, y: 520, w: 380 },
+  { x: 400, y: 700, w: 360 },
+  { x: 1050, y: 540, w: 360 },
+  { x: 1650, y: 700, w: 360 },
+  { x: 2250, y: 520, w: 360 },
+];
+
+// Hills: hand-placed slopes (Arcade Physics has no slope support; see slopes.ts).
+// Each hill = up-slope (90px) + flat top (90px) + down-slope (90px), peak 66px above ground.
+// The visuals drawn in GameScene.createHills must match these segments exactly.
+export interface SlopeDef {
+  x1: number;
+  y1: number;
+  x2: number;
+  y2: number;
+}
+export const HILLS: number[] = [860, 1900]; // left x of each hill; hill spans x..x+270
+export const SLOPES: SlopeDef[] = [
+  // Hill A
+  { x1: 860, y1: 900, x2: 949, y2: 834 },
+  { x1: 949, y1: 834, x2: 1040, y2: 834 },
+  { x1: 1040, y1: 834, x2: 1129, y2: 903 },
+  // Hill B
+  { x1: 1900, y1: 900, x2: 1989, y2: 834 },
+  { x1: 1989, y1: 834, x2: 2080, y2: 834 },
+  { x1: 2080, y1: 834, x2: 2169, y2: 903 },
 ];
 
 // Climbable vines: x, yTop, yBottom, from (platform idx or -1 ground), to (platform idx).

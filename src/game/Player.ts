@@ -58,7 +58,15 @@ export class Player {
     const body = this.sprite.body as Phaser.Physics.Arcade.Body;
     const cellW = tex === 'hero_attack' ? 32 : 20;
     body.setSize(12, 18);
-    body.setOffset((cellW - 12) / 2, 6);
+    // Body bottom sits at source row 20, where the visible feet end
+    // (rows 20-23 of the 24px cell are transparent padding).
+    body.setOffset((cellW - 12) / 2, 2);
+  }
+
+  /** World-space distance from the sprite center to the body's bottom (the feet). */
+  get feetOffset(): number {
+    const body = this.sprite.body as Phaser.Physics.Arcade.Body;
+    return body.bottom - this.sprite.y;
   }
 
   private playAnim(key: string): void {

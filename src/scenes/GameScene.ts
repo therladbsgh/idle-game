@@ -1,7 +1,8 @@
 import Phaser from 'phaser';
-import { BALANCE, MONSTER_TYPES, PHYSICS, PLATFORMS, VINES, WORLD } from '../game/config';
+import { BALANCE, HILLS, MONSTER_TYPES, PHYSICS, PLATFORMS, VINES, WORLD } from '../game/config';
 import { Player } from '../game/Player';
 import { Monster } from '../game/Monster';
+import { snapToSlope } from '../game/slopes';
 import { Hud } from '../ui/Hud';
 import { Fx } from '../game/fx';
 
@@ -36,6 +37,7 @@ export class GameScene extends Phaser.Scene {
   create(): void {
     this.drawSky();
     this.createPlatforms();
+    this.createHills();
     this.createVines();
     this.createClouds();
 
@@ -108,23 +110,37 @@ export class GameScene extends Phaser.Scene {
   private createPlatforms(): void {
     this.platformGroup = this.physics.add.staticGroup();
 
-    // Ground: grass tile strip + dirt below.
-    const ground = this.add.tileSprite(WORLD.w / 2, WORLD.groundY + 27, WORLD.w, 55, 'tile_grass');
+    // Ground: seamless 90px grass tile strip + dirt behind it (not below;
+    // the tile is fully opaque, so the dirt rect starts at groundY).
+    const ground = this.add.tileSprite(WORLD.w / 2, WORLD.groundY + 18, WORLD.w, 36, 'tile_grass');
     ground.setDepth(2);
     this.platformGroup.add(ground);
     this.add
-      .rectangle(WORLD.w / 2, WORLD.groundY + 55 + 70, WORLD.w, 140, 0x8a5a3b)
+      .rectangle(WORLD.w / 2, WORLD.groundY + 70, WORLD.w, 140, 0x8a5a3b)
       .setDepth(1);
 
-    // Floating platforms.
+    // Floating platforms. Widths are multiples of the 90px tile (see config),
+    // so the repeating texture never clips mid-tile.
     PLATFORMS.forEach((p) => {
-      const t = this.add.tileSprite(p.x + p.w / 2, p.y + 27, p.w, 55, 'tile_grass');
+      const t = this.add.tileSprite(p.x + p.w / 2, p.y + 18, p.w, 36, 'tile_grass');
       t.setDepth(2);
       this.platformGroup.add(t);
-      this.add.rectangle(p.x + p.w / 2, p.y + 55 + 18, p.w, 36, 0x8a5a3b).setDepth(1);
+      this.add.rectangle(p.x + p.w / 2, p.y + 36 + 18, p.w, 36, 0x8a5a3b).setDepth(1);
     });
 
     this.platformGroup.refresh();
+  }
+
+  private createHills(): void {
+    // Slope visuals; physics segments live in config SLOPES and must match.
+    // Each hill: up-slope 90x135 at (hx,832), flat top 90x100 at (hx+90,834),
+    // down-slope 90x135 at (hx+180,833). Surface: (hx,900)->(hx+89,834)->
+    // (hx+180,834)->(hx+269,903).
+    for (const hx of HILLS) {
+      this.add.image(hx, 832, 'slope_up').setOrigin(0, 0).setDepth(2);
+      this.add.image(hx + 90, 834, 'hill_top').setOrigin(0, 0).setDepth(2);
+      this.add.image(hx + 180, 833, 'slope_down').setOrigin(0, 0).setDepth(2);
+    }
   }
 
   private createVines(): void {
@@ -223,6 +239,10 @@ export class GameScene extends Phaser.Scene {
     p.mp = Math.min(p.maxMp, p.mp + BALANCE.mpRegen * dt);
 
     p.airborne = !(body.touching.down || body.blocked.down) && !p.climbing;
+    // Manual slope support: snap feet onto hill surfaces before the grounded
+    // checks below (Arcade Physics has no slope collision of its own).
+    const onSlope = !p.climbing && p.deadT <= 0 && snapToSlope(p.sprite, p.feetOffset);
+    if (onSlope) p.airborne = false;
     if (!p.airborne && !p.climbing) this.updatePlayerPlatform();
 
     const target = this.nearestMonster();
@@ -249,7 +269,7 @@ export class GameScene extends Phaser.Scene {
 
   private updatePlayerPlatform(): void {
     const p = this.player;
-    const feetY = p.y + 45; // body half-height
+    const feetY = p.y + p.feetOffset;
     p.platform = -1;
     for (let i = 0; i < PLATFORMS.length; i++) {
       const pl = PLATFORMS[i];
@@ -374,7 +394,7 @@ export class GameScene extends Phaser.Scene {
         p.climbing = false;
         p.climbVine = null;
         body.setAllowGravity(true);
-        p.sprite.y = vine.yTop - 45;
+        p.sprite.y = vine.yTop - p.feetOffset;
         body.setVelocity(0, 0);
         p.platform = vine.to;
       }
@@ -464,7 +484,10 @@ export class GameScene extends Phaser.Scene {
         m.deadT -= dt;
         continue;
       }
-      m.updateAI(dt, p.x, p.y, p.deadT > 0);
+      // Hills have no physics body; snap feet onto slope surfaces instead.
+      const mBody = m.sprite.body as Phaser.Physics.Arcade.Body;
+      const mOnSlope = snapToSlope(m.sprite, mBody.bottom - m.sprite.y);
+      m.updateAI(dt, p.x, p.y, p.deadT > 0, mOnSlope);
 
       const adx = Math.abs(p.x - m.x);
       const ady = Math.abs(p.y - m.y);

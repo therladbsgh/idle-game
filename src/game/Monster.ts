@@ -101,9 +101,9 @@ export class Monster {
   }
 
   /** Hop toward the player when close, else wander-hop within bounds. */
-  updateAI(dt: number, px: number, py: number, playerDead: boolean): void {
+  updateAI(dt: number, px: number, py: number, playerDead: boolean, onSlope = false): void {
     const body = this.sprite.body as Phaser.Physics.Arcade.Body;
-    if (!body.touching.down && !body.blocked.down) {
+    if (!body.touching.down && !body.blocked.down && !onSlope) {
       // Airborne: keep drifting, clamp to patrol bounds.
       this.sprite.x = Phaser.Math.Clamp(this.sprite.x, this.minX, this.maxX);
       return;

@@ -23,11 +23,14 @@ export class BootScene extends Phaser.Scene {
     // Tiles / props
     this.load.image('tile_grass', 'sprites/tile_grass.png');
     this.load.image('vine', 'sprites/vine.png');
+    this.load.image('slope_up', 'sprites/slope_up.png');
+    this.load.image('slope_down', 'sprites/slope_down.png');
+    this.load.image('hill_top', 'sprites/hill_top.png');
   }
 
   create(): void {
     // Crisp pixels for the pixel-art sprites.
-    for (const key of ['hero_idle', 'hero_walk', 'hero_jump', 'hero_climb', 'hero_attack', 'tile_grass', 'vine']) {
+    for (const key of ['hero_idle', 'hero_walk', 'hero_jump', 'hero_climb', 'hero_attack', 'tile_grass', 'vine', 'slope_up', 'slope_down', 'hill_top']) {
       this.textures.get(key).setFilter(Phaser.Textures.FilterMode.NEAREST);
     }
 
