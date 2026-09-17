@@ -27,19 +27,17 @@ export class GameScene extends Phaser.Scene {
   private speedMul = 1;
   private spawnT = 0;
   private platformGroup!: Phaser.Physics.Arcade.StaticGroup;
-  private skyGfx!: Phaser.GameObjects.Graphics;
-  private clouds: Array<{ gfx: Phaser.GameObjects.Graphics; v: number }> = [];
+  private bgSky!: Phaser.GameObjects.TileSprite;
 
   constructor() {
     super('game');
   }
 
   create(): void {
-    this.drawSky();
+    this.createBackground();
     this.createPlatforms();
     this.createHills();
     this.createVines();
-    this.createClouds();
 
     this.fx = new Fx(this);
     this.player = new Player(this, WORLD.w / 2, WORLD.groundY - 80);
@@ -70,41 +68,56 @@ export class GameScene extends Phaser.Scene {
   }
 
   private onResize(): void {
-    this.drawSky();
+    this.layoutSky();
     this.hud.layout();
   }
 
-  private drawSky(): void {
-    const w = this.scale.width;
-    const h = this.scale.height;
-    if (this.skyGfx) this.skyGfx.destroy();
-    this.skyGfx = this.add.graphics().setScrollFactor(0).setDepth(-10);
-    this.skyGfx.fillGradientStyle(0x4a90d9, 0x4a90d9, 0xcfe8ff, 0xcfe8ff, 1);
-    this.skyGfx.fillRect(0, 0, w, h);
-    this.skyGfx.fillStyle(0xfff6c9, 1);
-    this.skyGfx.fillCircle(w - 150, 130, 54);
-    this.skyGfx.fillStyle(0xffffff, 0.5);
-    this.skyGfx.fillCircle(w - 150, 130, 70);
+  // MapleStory parallax background (Mushroom Shrine assets): gradient sky,
+  // Mt. Fuji panorama, cherry-blossom forest + canopy, trees and a pagoda.
+  private createBackground(): void {
+    this.bgSky = this.add
+      .tileSprite(0, 0, this.scale.width, this.scale.height, 'bg_sky')
+      .setOrigin(0, 0)
+      .setScrollFactor(0)
+      .setDepth(-10);
+    this.layoutSky();
+
+    for (const x of [400, 1500, 2600]) {
+      this.add
+        .image(x, WORLD.groundY - 150, 'bg_mountain')
+        .setOrigin(0.5, 1)
+        .setScale(1.4)
+        .setScrollFactor(0.18, 1)
+        .setDepth(-9);
+    }
+
+    this.add
+      .tileSprite(WORLD.w / 2, WORLD.groundY - 100, WORLD.w + 800, 247, 'bg_forest')
+      .setScrollFactor(0.45, 1)
+      .setDepth(-8);
+
+    const landmark = (
+      x: number,
+      key: string,
+      scale: number,
+    ): void => {
+      this.add
+        .image(x, WORLD.groundY + 5, key)
+        .setOrigin(0.5, 1)
+        .setScale(scale)
+        .setScrollFactor(0.6, 1)
+        .setDepth(-6);
+    };
+    landmark(600, 'bg_tree_big', 0.8);
+    landmark(1200, 'bg_tree_small', 0.9);
+    landmark(1900, 'bg_pagoda', 1);
+    landmark(2400, 'bg_tree_med', 1);
   }
 
-  private createClouds(): void {
-    for (let i = 0; i < 6; i++) {
-      const g = this.add.graphics().setDepth(1);
-      const x = Phaser.Math.Between(0, WORLD.w);
-      const y = Phaser.Math.Between(90, 320);
-      g.fillStyle(0xffffff, 0.85);
-      g.fillEllipse(0, 0, 180, 60);
-      g.fillEllipse(-60, 10, 100, 44);
-      g.fillEllipse(60, 10, 110, 48);
-      g.setPosition(x, y);
-      this.clouds.push({ gfx: g, v: Phaser.Math.Between(10, 28) });
-    }
-    // Rolling hills behind the ground.
-    const hills = this.add.graphics().setDepth(0);
-    hills.fillStyle(0x8fd18a, 1);
-    hills.fillEllipse(500, WORLD.groundY + 90, 1400, 420);
-    hills.fillStyle(0x7ecb78, 1);
-    hills.fillEllipse(2100, WORLD.groundY + 110, 1700, 480);
+  private layoutSky(): void {
+    const h = this.scale.height;
+    this.bgSky.setSize(this.scale.width, h);
+    this.bgSky.setTileScale(1, h / 178);
   }
 
   private createPlatforms(): void {
@@ -114,6 +127,10 @@ export class GameScene extends Phaser.Scene {
     const ground = this.add.tileSprite(WORLD.w / 2, WORLD.groundY + 27, WORLD.w, 55, 'tile_grass');
     ground.setDepth(2);
     this.platformGroup.add(ground);
+
+    // Dirt body below the grass strip, cut from the same tile so it matches.
+    const dirt = this.add.tileSprite(WORLD.w / 2, WORLD.groundY + 55 + 200, WORLD.w, 400, 'dirt_fill');
+    dirt.setDepth(1);
 
     // Floating platforms. Widths are multiples of the 90px tile (see config),
     // so the repeating texture never clips mid-tile.
@@ -191,11 +208,6 @@ export class GameScene extends Phaser.Scene {
   update(_time: number, delta: number): void {
     const dt = Math.min(delta / 1000, 0.05) * this.speedMul;
     const p = this.player;
-
-    for (const c of this.clouds) {
-      c.gfx.x += c.v * dt;
-      if (c.gfx.x > WORLD.w + 200) c.gfx.x = -200;
-    }
 
     this.spawnT -= dt;
     if (this.spawnT <= 0 && this.monsters.filter((m) => !m.dead).length < BALANCE.maxMonsters) {

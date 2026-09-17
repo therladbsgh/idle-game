@@ -22,15 +22,24 @@ export class BootScene extends Phaser.Scene {
     this.load.spritesheet('pig', 'sprites/pig.png', { frameWidth: 109, frameHeight: 63 });
     // Tiles / props
     this.load.image('tile_grass', 'sprites/tile_grass.png');
+    this.load.image('dirt_fill', 'sprites/dirt_fill.png');
     this.load.image('vine', 'sprites/vine.png');
     this.load.image('slope_up', 'sprites/slope_up.png');
     this.load.image('slope_down', 'sprites/slope_down.png');
     this.load.image('hill_top', 'sprites/hill_top.png');
+    // Background: MapleStory Mushroom Shrine parallax layers
+    this.load.image('bg_sky', 'sprites/bg_sky.png');
+    this.load.image('bg_mountain', 'sprites/bg_mountain.png');
+    this.load.image('bg_forest', 'sprites/bg_forest.png');
+    this.load.image('bg_tree_big', 'sprites/bg_tree_big.png');
+    this.load.image('bg_tree_med', 'sprites/bg_tree_med.png');
+    this.load.image('bg_tree_small', 'sprites/bg_tree_small.png');
+    this.load.image('bg_pagoda', 'sprites/bg_pagoda.png');
   }
 
   create(): void {
     // Crisp pixels for the pixel-art sprites.
-    for (const key of ['hero_idle', 'hero_walk', 'hero_jump', 'hero_climb', 'hero_attack', 'tile_grass', 'vine', 'slope_up', 'slope_down', 'hill_top']) {
+    for (const key of ['hero_idle', 'hero_walk', 'hero_jump', 'hero_climb', 'hero_attack', 'tile_grass', 'dirt_fill', 'vine', 'slope_up', 'slope_down', 'hill_top', 'bg_sky', 'bg_mountain', 'bg_forest', 'bg_tree_big', 'bg_tree_med', 'bg_tree_small', 'bg_pagoda']) {
       this.textures.get(key).setFilter(Phaser.Textures.FilterMode.NEAREST);
     }
 
